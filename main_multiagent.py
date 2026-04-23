@@ -81,7 +81,7 @@ def main():
     if not os.path.exists(os.path.join(logs_path, "score_overview.csv")):
         os.makedirs(logs_path, exist_ok=True)
         with open(os.path.join(logs_path, "score_overview.csv"), 'a') as file:
-            line = "scenario;agent;timestep;status;message\n"
+            line = "scenario;agent;timestep;status;message;result;collision_type;colliding_object_id\n"
             file.write(line)
 
     if evaluation_pipeline:

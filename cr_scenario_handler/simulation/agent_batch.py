@@ -11,9 +11,87 @@ from multiprocessing import Process, Queue, Event
 from queue import Empty
 from typing import Optional, List
 
+import numpy as np
 from commonroad.scenario.scenario import Scenario
 
 from cr_scenario_handler.utils.agent_status import AgentStatus, TIMEOUT
+
+
+def determine_collision_type(agent, scenario, timestep):
+    """
+    Classify the ego's collision relative to the nearest dynamic obstacle.
+
+    Returns (collision_type, colliding_object_id) where collision_type is one of
+    "front_collision", "rear_collision", "side_collision", "boundary_collision", "unknown".
+    """
+    try:
+        ego_state = agent.record_state_list[-1] if agent.record_state_list else None
+        if ego_state is None:
+            return ("unknown", None)
+
+        ego_pos = np.array([ego_state.position[0], ego_state.position[1]])
+        ego_orientation = ego_state.orientation
+
+        ego_length = 4.508
+        ego_width = 1.610
+
+        closest_distance = float('inf')
+        closest_obs_id = None
+        closest_collision_type = None
+
+        for obs in scenario.dynamic_obstacles:
+            if obs.obstacle_id == agent.id:
+                continue
+
+            try:
+                obs_state = obs.state_at_time(timestep)
+                if obs_state is None:
+                    continue
+
+                obs_pos = np.array([obs_state.position[0], obs_state.position[1]])
+                relative_pos = obs_pos - ego_pos
+                distance = np.linalg.norm(relative_pos)
+
+                if distance > 10.0:
+                    continue
+
+                cos_theta = np.cos(-ego_orientation)
+                sin_theta = np.sin(-ego_orientation)
+                rotation_matrix = np.array([[cos_theta, -sin_theta],
+                                            [sin_theta, cos_theta]])
+                local_relative_pos = rotation_matrix @ relative_pos
+
+                d_long = local_relative_pos[0]
+                d_lat = local_relative_pos[1]
+
+                front_threshold = ego_length / 2
+                rear_threshold = -ego_length / 2
+                side_threshold = ego_width / 2
+
+                if d_long > front_threshold:
+                    collision_type = "front_collision"
+                elif d_long < rear_threshold:
+                    collision_type = "rear_collision"
+                elif abs(d_lat) > side_threshold:
+                    collision_type = "side_collision"
+                else:
+                    collision_type = "front_collision"
+
+                if distance < closest_distance:
+                    closest_distance = distance
+                    closest_obs_id = obs.obstacle_id
+                    closest_collision_type = collision_type
+
+            except Exception:
+                continue
+
+        if closest_obs_id is not None:
+            return (closest_collision_type, closest_obs_id)
+
+        return ("boundary_collision", None)
+
+    except Exception:
+        return ("unknown", None)
 
 
 class AgentBatch(Process):
@@ -66,7 +144,7 @@ class AgentBatch(Process):
         # initialize communication dict
         self.out_queue_dict = dict.fromkeys(self.agent_ids, {})
 
-        self.latest_starting_time = max([agent.current_timestep for agent in self.agent_list])
+        self.latest_starting_time = max([agent.current_timestep for agent in self.agent_list]) if self.agent_list else 0
 
         # dict of all agents with corresponding starting times
         self.agent_dict = {timestep: [agent for agent in self.agent_list if agent.current_timestep == timestep] for
@@ -202,8 +280,18 @@ class AgentBatch(Process):
                 self.running_agent_list.remove(agent)
                 with (open(os.path.join(self.mod_path, "logs", "score_overview.csv"), 'a') as file):
                     msg = "Success" if agent.status == AgentStatus.COMPLETED_SUCCESS else "Failed"
+
+                    collision_type = ""
+                    colliding_object_id = ""
+                    if agent.status == AgentStatus.COLLISION:
+                        collision_type, colliding_object_id = determine_collision_type(
+                            agent, agent.scenario, agent.current_timestep
+                        )
+                        colliding_object_id = str(colliding_object_id) if colliding_object_id is not None else ""
+
                     line = str(agent.scenario.scenario_id) + ";" + str(agent.id) + ";" + str(agent.current_timestep) + ";" + \
-                           str(agent.status) + ";" + str(agent.agent_state.message) + ";" + msg + "\n"
+                           str(agent.status) + ";" + str(agent.agent_state.message) + ";" + msg + ";" + \
+                           str(collision_type) + ";" + str(colliding_object_id) + "\n"
                     file.write(line)
 
             self.out_queue_dict[agent.id] = {"agent_state": agent.agent_state,

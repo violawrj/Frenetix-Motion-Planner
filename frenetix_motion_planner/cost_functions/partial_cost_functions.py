@@ -9,7 +9,7 @@ import numpy as np
 import frenetix_motion_planner.trajectories
 from commonroad.scenario.trajectory import State
 from commonroad.scenario.scenario import Scenario
-from scipy.integrate import simps
+from scipy.integrate import simpson
 import commonroad_dc.pycrcc as pycrcc
 from shapely.geometry import LineString, Point
 from cr_scenario_handler.utils import helper_functions as hf
@@ -28,7 +28,7 @@ def acceleration_costs(trajectory: frenetix_motion_planner.trajectories.Trajecto
     """
     acceleration = trajectory.cartesian.a
     acceleration_sq = np.square(acceleration)
-    cost = simps(acceleration_sq, dx=trajectory.dt)
+    cost = simpson(acceleration_sq, dx=trajectory.dt)
     
     return cost
 
@@ -41,7 +41,7 @@ def jerk_costs(trajectory: frenetix_motion_planner.trajectories.TrajectorySample
     acceleration = trajectory.cartesian.a
     jerk = np.diff(acceleration) / trajectory.dt
     jerk_sq = np.square(jerk)
-    cost = simps(jerk_sq, dx=trajectory.dt)
+    cost = simpson(jerk_sq, dx=trajectory.dt)
 
     return cost
 
@@ -146,7 +146,7 @@ def orientation_offset_costs(trajectory: frenetix_motion_planner.trajectories.Tr
     theta = trajectory.curvilinear.theta
     theta = np.diff(theta) / trajectory.dt
     theta = np.square(theta)
-    cost = simps(theta, dx=trajectory.dt)
+    cost = simpson(theta, dx=trajectory.dt)
 
     return cost
 
@@ -192,7 +192,7 @@ def path_length_costs(trajectory: frenetix_motion_planner.trajectories.Trajector
     Calculates the path length cost for the given trajectory.
     """
     velocity = trajectory.cartesian.v
-    cost = simps(velocity, dx=trajectory.dt)
+    cost = simpson(velocity, dx=trajectory.dt)
     return cost
 
 
