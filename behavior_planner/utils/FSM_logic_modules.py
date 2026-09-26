@@ -132,7 +132,7 @@ class LogicHighwayDynamic:
                 if self.BM_state.current_lanelet.adj_left is not None:
                     if self.BM_state.current_lanelet.adj_left_same_direction:
                         if self.BM_state.current_lanelet.line_marking_left_vertices != LineMarking('solid') and \
-                                self.BM_state.current_lanelet.line_marking_right_vertices != LineMarking('broad_solid'):
+                                self.BM_state.current_lanelet.line_marking_left_vertices != LineMarking('broad_solid'):
                             self.transition = 'toPrepareLaneChangeLeft'
                             self.cur_state = 'PrepareLaneChangeLeft'
         # TODO: add lane change due to Lane Merge, Road Exit, slow preceding vehicle ....
@@ -287,7 +287,7 @@ class LogicUrbanDynamic:
                 if self.BM_state.current_lanelet.adj_left is not None:
                     if self.BM_state.current_lanelet.adj_left_same_direction:
                         if self.BM_state.current_lanelet.line_marking_left_vertices != LineMarking('solid') and \
-                                self.BM_state.current_lanelet.line_marking_right_vertices != LineMarking('broad_solid'):
+                                self.BM_state.current_lanelet.line_marking_left_vertices != LineMarking('broad_solid'):
                             self.transition = 'toPrepareLaneChangeLeft'
                             self.cur_state = 'PrepareLaneChangeLeft'
 
