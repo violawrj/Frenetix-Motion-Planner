@@ -1099,7 +1099,7 @@ class PrepareTrafficLight(State):
 
         # actions
         self.FSM_situation.execute()
-        bhv_logger.debug("FSM Behavior State: Traffic Light is: ", self.FSM_state.traffic_light_state)
+        bhv_logger.debug("FSM Behavior State: Traffic Light is: %s", self.FSM_state.traffic_light_state)
 
     def reset_state(self):
         self.cur_state = 'ObservingTrafficLight'
@@ -1150,7 +1150,7 @@ class TrafficLight(State):
 
         # actions
         self.FSM_situation.execute()
-        bhv_logger.debug("FSM Behavior State: Traffic Light is: ", self.FSM_state.traffic_light_state)
+        bhv_logger.debug("FSM Behavior State: Traffic Light is: %s", self.FSM_state.traffic_light_state)
 
     def reset_state(self):
         self.cur_state = self.init_state
@@ -1482,8 +1482,8 @@ class IdentifyFreeSpaceOnTargetLaneForLaneChange(State):
                                                       self.BM_state.ego_state.velocity / 2 * risk_factor)):
                                 free_space_on_target_lanelet = False
                                 bhv_logger.debug('\n*Free Space: obstacle behind ego vehicle')
-                                bhv_logger.debug('*Free Space: obstacle position: ', obstacle_position)
-                                bhv_logger.debug('*Free Space: obstacle velocity: ', obstacle_velocity)
+                                bhv_logger.debug('*Free Space: obstacle position: %s', obstacle_position)
+                                bhv_logger.debug('*Free Space: obstacle velocity: %s', obstacle_velocity)
                                 bhv_logger.debug('*Free Space: obstacle is not further behind than half the velocity distance\n')
                         # obstacle in front of ego vehicle
                         else:
@@ -1493,8 +1493,8 @@ class IdentifyFreeSpaceOnTargetLaneForLaneChange(State):
                                                       self.BM_state.ego_state.velocity / 2 * risk_factor)):
                                 free_space_on_target_lanelet = False
                                 bhv_logger.debug('\n*Free Space: obstacle in front of ego vehicle')
-                                bhv_logger.debug('*Free Space: obstacle position: ', obstacle_position)
-                                bhv_logger.debug('*Free Space: obstacle velocity: ', obstacle_velocity)
+                                bhv_logger.debug('*Free Space: obstacle position: %s', obstacle_position)
+                                bhv_logger.debug('*Free Space: obstacle velocity: %s', obstacle_velocity)
                                 bhv_logger.debug('*Free Space: obstacle is not further away than half the velocity distance\n')
                 if ego_position_offset == 0:
                     if free_space_on_target_lanelet:
@@ -1502,14 +1502,14 @@ class IdentifyFreeSpaceOnTargetLaneForLaneChange(State):
                         break
                 else:
                     if free_space_on_target_lanelet:
-                        bhv_logger.debug('\n*Free Space: free space detected with offset: \n', ego_position_offset)
+                        bhv_logger.debug('\n*Free Space: free space detected with offset: \n %s', ego_position_offset)
                         self.FSM_state.free_space_offset = ego_position_offset
                         self.FSM_state.change_velocity_for_lane_change = True
                         break
         if self.FSM_state.free_space_on_target_lanelet:
             bhv_logger.debug('\n*Free Space: free space detected\n')
         time2 = time.time()
-        bhv_logger.debug('Free Space calc time: ', time2 - time1)
+        bhv_logger.debug('Free Space calc time: %s', time2 - time1)
 
 
 class IdentifyFreeSpaceOnTargetLaneForLaneMerge(State):
@@ -1534,7 +1534,7 @@ class IdentifyFreeSpaceOnTargetLaneForLaneMerge(State):
                 free_space_on_target_lanelet = True
                 if self.FSM_state.free_space_offset == 0 and not self.FSM_state.free_space_on_target_lanelet:
                     if ego_position_offset != 0:
-                        bhv_logger.debug('\n*Free Space: Ego position offset: \n', ego_position_offset)
+                        bhv_logger.debug('\n*Free Space: Ego position offset: \n %s', ego_position_offset)
                     for obstacle_id in self.FSM_state.obstacles_on_target_lanelet:
                         obstacle = self.FSM_state.obstacles_on_target_lanelet.get(obstacle_id)
                         obstacle_position = obstacle.get('pos_list')[0]
@@ -1557,8 +1557,8 @@ class IdentifyFreeSpaceOnTargetLaneForLaneMerge(State):
                                                       self.BM_state.ego_state.velocity / 2 * risk_factor)):
                                 free_space_on_target_lanelet = False
                                 bhv_logger.debug('\n*Free Space: obstacle behind ego vehicle')
-                                bhv_logger.debug('*Free Space: obstacle position: ', obstacle_position)
-                                bhv_logger.debug('*Free Space: obstacle velocity: ', obstacle_velocity)
+                                bhv_logger.debug('*Free Space: obstacle position: %s', obstacle_position)
+                                bhv_logger.debug('*Free Space: obstacle velocity: %s', obstacle_velocity)
                                 bhv_logger.debug('*Free Space: obstacle is not further behind than half the velocity distance\n')
                         # obstacle in front of ego vehicle
                         else:
@@ -1568,8 +1568,8 @@ class IdentifyFreeSpaceOnTargetLaneForLaneMerge(State):
                                                       self.BM_state.ego_state.velocity / 2 * risk_factor)):
                                 free_space_on_target_lanelet = False
                                 bhv_logger.debug('\n*Free Space: obstacle in front of ego vehicle')
-                                bhv_logger.debug('*Free Space: obstacle position: ', obstacle_position)
-                                bhv_logger.debug('*Free Space: obstacle velocity: ', obstacle_velocity)
+                                bhv_logger.debug('*Free Space: obstacle position: %s', obstacle_position)
+                                bhv_logger.debug('*Free Space: obstacle velocity: %s', obstacle_velocity)
                                 bhv_logger.debug('*Free Space: obstacle is not further away than half the velocity distance\n')
                 if ego_position_offset == 0:
                     if free_space_on_target_lanelet:
@@ -1577,14 +1577,14 @@ class IdentifyFreeSpaceOnTargetLaneForLaneMerge(State):
                         break
                 else:
                     if free_space_on_target_lanelet:
-                        bhv_logger.debug('\n*Free Space: free space detected with offset: \n', ego_position_offset)
+                        bhv_logger.debug('\n*Free Space: free space detected with offset: \n %s', ego_position_offset)
                         self.FSM_state.free_space_offset = ego_position_offset
                         self.FSM_state.change_velocity_for_lane_change = True
                         break
         if self.FSM_state.free_space_on_target_lanelet:
             bhv_logger.debug('\n*Free Space: free space detected\n')
         time2 = time.time()
-        bhv_logger.debug('Free Space calc time: ', time2 - time1)
+        bhv_logger.debug('Free Space calc time: %s', time2 - time1)
 
 
 class PreparationsDone(State):
@@ -1734,7 +1734,7 @@ class SlowingDown(State):
                 self.VP_state.stop_distance = self.VP_state.dist_preceding_veh - \
                                               self.BM_state.vehicle_params.length - \
                                               self.VP_state.closest_preceding_vehicle.obstacle_shape.length
-        bhv_logger.debug("FSM distance to stopping line is: ", self.VP_state.dist_to_tl)
+        bhv_logger.debug("FSM distance to stopping line is: %s", self.VP_state.dist_to_tl)
 
 
 class GreenLight(State):
@@ -1769,7 +1769,7 @@ class Stopping(State):
                                               self.BM_state.vehicle_params.length - \
                                               self.VP_state.closest_preceding_vehicle.obstacle_shape.length
 
-        bhv_logger.debug("FSM distance to stopping line is: ", self.VP_state.dist_to_tl)
+        bhv_logger.debug("FSM distance to stopping line is: %s", self.VP_state.dist_to_tl)
 
 
 class WaitingForGreenLight(State):
