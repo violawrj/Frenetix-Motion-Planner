@@ -1409,6 +1409,12 @@ class IdentifyTargetLaneAndVehiclesOnTargetLane(State):
                 if static_goal.goal_type == 'LaneMerge' and static_goal.end_s >= self.BM_state.ref_position_s:
                     lane_merge_lanelet_id = static_goal.goal_lanelet_id
             if lane_merge_lanelet_id is None:
+                # Straightening the static route plan can drop a LaneMerge goal while keeping
+                # its PrepareLaneMerge goal, which carries the same target lanelet.
+                current_goal = self.BM_state.current_static_goal
+                if current_goal is not None and current_goal.goal_type == 'PrepareLaneMerge':
+                    lane_merge_lanelet_id = current_goal.goal_lanelet_id
+            if lane_merge_lanelet_id is None:
                 bhv_logger.warning("No lane merge found ahead of current position.")
 
             self.FSM_state.lane_change_target_lanelet_id = lane_merge_lanelet_id
@@ -1421,7 +1427,10 @@ class IdentifyTargetLaneAndVehiclesOnTargetLane(State):
             self.FSM_state.lane_change_target_lanelet = self.BM_state.scenario.lanelet_network.find_lanelet_by_id(
                 self.FSM_state.lane_change_target_lanelet_id)
 
-        # identify relevant objects on target lane
+        # identify relevant objects on target lane (none without a target lane)
+        if self.FSM_state.lane_change_target_lanelet_id is None:
+            self.FSM_state.obstacles_on_target_lanelet = dict()
+            return
         self.FSM_state.obstacles_on_target_lanelet = hf.get_predicted_obstacles_on_lanelet(
             predictions=self.BM_state.predictions,
             lanelet_network=self.BM_state.scenario.lanelet_network,
