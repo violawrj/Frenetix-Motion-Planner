@@ -94,10 +94,14 @@ class ReactivePlannerCpp(Planner):
             self.logger.set_logging_header(self.config_plan.cost.cost_weights)
 
     def trajectory_handler_set_constant_feasibility_functions(self):
-        self.handler.add_feasability_function(ff.CheckYawRateConstraint(deltaMax=self.vehicle_params.delta_max,
-                                                                        wheelbase=self.vehicle_params.wheelbase,
-                                                                        wholeTrajectory=False
-                                                                        ))
+        # No ff.CheckYawRateConstraint. frenetix 0.4.0 computes the yaw rate as
+        # (theta[i] - theta[i-1]) / dt without wrapping the angle, and a sample's theta
+        # jumps by 2*pi near +-pi, so nearly every sample of a westbound ego failed it
+        # (~62 rad/s against a limit of ~6) and the plan ended with "no feasible
+        # trajectory". Upstream master's |theta[i]| - |theta[i-1]| still fails for theta
+        # beyond +-pi, which these samples reach. The check adds nothing anyway: its limit
+        # kappa_max * v equals |kappa| <= kappa_max for a vehicle following its path
+        # (yaw rate = v * kappa), which CheckCurvatureConstraint below enforces.
         self.handler.add_feasability_function(ff.CheckAccelerationConstraint(switchingVelocity=self.vehicle_params.v_switch,
                                                                              maxAcceleration=self.vehicle_params.a_max,
                                                                              wholeTrajectory=False)
@@ -467,20 +471,14 @@ class ReactivePlannerCpp(Planner):
 
     def transfer_infeasible_logging_information(self, infeasible_trajectories):
 
-        feas_list = [i.feasabilityMap['Curvature Constraint'] for i in infeasible_trajectories]
-        acc_feas = [int(1) if num > 0 else int(0) for num in feas_list]
-        self._infeasible_count_kinematics[5] = int(sum(acc_feas))
+        def n_failing(name):
+            # a check the handler does not run (the yaw rate, see above) fails nothing
+            return int(sum(1 for i in infeasible_trajectories
+                           if name in i.feasabilityMap and i.feasabilityMap[name] > 0))
 
-        feas_list = [i.feasabilityMap['Yaw rate Constraint'] for i in infeasible_trajectories]
-        acc_feas = [int(1) if num > 0 else int(0) for num in feas_list]
-        self._infeasible_count_kinematics[6] = int(sum(acc_feas))
-
-        feas_list = [i.feasabilityMap['Curvature Rate Constraint'] for i in infeasible_trajectories]
-        acc_feas = [int(1) if num > 0 else int(0) for num in feas_list]
-        self._infeasible_count_kinematics[7] = int(sum(acc_feas))
-
-        feas_list = [i.feasabilityMap['Acceleration Constraint'] for i in infeasible_trajectories]
-        acc_feas = [int(1) if num > 0 else int(0) for num in feas_list]
-        self._infeasible_count_kinematics[8] = int(sum(acc_feas))
+        self._infeasible_count_kinematics[5] = n_failing('Curvature Constraint')
+        self._infeasible_count_kinematics[6] = n_failing('Yaw rate Constraint')
+        self._infeasible_count_kinematics[7] = n_failing('Curvature Rate Constraint')
+        self._infeasible_count_kinematics[8] = n_failing('Acceleration Constraint')
 
         self._infeasible_count_kinematics[0] = int(sum(self._infeasible_count_kinematics))
