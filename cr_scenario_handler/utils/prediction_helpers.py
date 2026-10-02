@@ -246,6 +246,14 @@ def get_ground_truth_prediction(
                     fut_yaw.append(occupancy.shape.orientation)
                     fut_v.append(obstacle.prediction.trajectory.state_list[ts].velocity)
 
+            # An obstacle whose recorded trajectory has ended (it left the scenario) has no
+            # future position. Leave it out: the behaviour planner and the cost functions
+            # read pos_list[0] of every prediction, and an empty one raised "IndexError:
+            # index 0 is out of bounds for axis 0 with size 0" mid-plan whenever a vehicle
+            # drove off the map within sensor range.
+            if not fut_pos:
+                continue
+
             fut_pos = np.array(fut_pos)
             fut_cov = np.array(fut_cov)
             fut_yaw = np.array(fut_yaw)
